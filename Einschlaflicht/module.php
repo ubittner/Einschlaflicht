@@ -54,8 +54,8 @@ class Einschlaflicht extends IPSModule
         $this->RegisterAttributeInteger('CyclingBrightness', 0);
         $this->RegisterAttributeInteger('CyclingInterval', 0);
         //Register timers
-        $this->RegisterTimer('SleepMode', 0, 'NL_ExecuteSleepMode(' . $this->InstanceID . ');');
-        $this->RegisterTimer('UpdateLightState', 0, 'NL_UpdateLightState(' . $this->InstanceID . ');');
+        $this->RegisterTimer('SleepMode', 0, 'EL_ExecuteSleepMode(' . $this->InstanceID . ');');
+        $this->RegisterTimer('UpdateLightState', 0, 'EL_UpdateLightState(' . $this->InstanceID . ');');
     }
 
     public function Destroy()
