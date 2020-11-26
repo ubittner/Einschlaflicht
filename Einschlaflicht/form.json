@@ -1,0 +1,86 @@
+{
+  "elements": [
+    {
+      "type": "Image",
+      "image": "data:image/png;base64, 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"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "CheckBox",
+      "name": "Usability",
+      "caption": "Aktiv"
+    },
+    {
+      "type": "SelectModule",
+      "name": "Light",
+      "caption": "Hue Licht / Gruppe",
+      "moduleID": "{83354C26-2732-427C-A781-B3F5CDF758B1}"
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "UpdateInterval",
+      "caption": "Statusaktualisierung",
+      "suffix": "Sekunden",
+      "minimum": 0
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "SelectColor",
+      "name": "SleepColor",
+      "caption": "Farbwert"
+    },
+    {
+      "type": "HorizontalSlider",
+      "name": "SleepBrightness",
+      "caption": "Helligkeit",
+      "minimum": 0,
+      "maximum": 254
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "SleepDuration",
+      "caption": "Einschlafdauer",
+      "suffix": "Minuten",
+      "minimum": 15,
+      "maximum": 60
+    }
+  ],
+  "actions": [
+    {
+      "type": "TestCenter"
+    }
+  ],
+  "status": [
+    {
+      "code": 101,
+      "icon": "active",
+      "caption": "Einschlaflicht wird erstellt"
+    },
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "Einschlaflicht ist aktiv"
+    },
+    {
+      "code": 103,
+      "icon": "active",
+      "caption": "Einschlaflicht wird gelöscht"
+    },
+    {
+      "code": 104,
+      "icon": "inactive",
+      "caption": "Einschlaflicht ist inaktiv"
+    },
+    {
+      "code": 201,
+      "icon": "inactive",
+      "caption": "Einschlaflicht hat einen Fehler!"
+    }
+  ]
+}

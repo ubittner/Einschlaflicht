@@ -1,0 +1,14 @@
+{
+  "id": "{6A62B9E5-2986-C6A2-84DF-064413841747}",
+  "name": "Einschlaflicht",
+  "type": 3,
+  "vendor": "Philips",
+  "aliases": [
+    "Einschlaflicht"
+  ],
+  "url": "https://github.com/ubittner/Einschlaflicht",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "EL"
+}

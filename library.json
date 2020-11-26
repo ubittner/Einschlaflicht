@@ -1,0 +1,12 @@
+{
+  "id": "{026D307C-2776-F3D6-EBD0-44C307C151BE}",
+  "author": "Ulrich Bittner",
+  "name": "Einschlaflicht",
+  "url": "https://github.com/ubittner/Einschlaflicht",
+  "compatibility": {
+    "version": "5.5"
+  },
+  "version": "1.00",
+  "build": 1,
+  "date": 1606388578
+}
