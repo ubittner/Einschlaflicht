@@ -79,13 +79,18 @@ trait EL_control
                 $this->ResetParameters();
                 return;
             }
-            //Abort, if or actual brightness is higher then the last cycling brightness
             $brightness = $this->ReadAttributeInteger('CyclingBrightness');
+            $this->SendDebug(__FUNCTION__, 'CyclingBrightness: ' . $brightness, 0);
+            $actualLightBrightness = $this->GetLightBrightness();
+            $this->SendDebug(__FUNCTION__, 'ActualLightBrightness: ' . $actualLightBrightness, 0);
+            /*
+            //Abort, if or actual brightness is higher then the last cycling brightness
             if ($this->GetLightBrightness() > $brightness + 1) {
                 $this->SetValue('SleepLight', true);
                 $this->ResetParameters();
                 return;
             }
+             */
             //Dimming down
             if ($brightness > 0) {
                 @PHUE_DimSet($id, $brightness - 1);
