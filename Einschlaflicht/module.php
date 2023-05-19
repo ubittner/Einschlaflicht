@@ -19,11 +19,12 @@ class Einschlaflicht extends IPSModule
 {
     ##### Helper
     use ESL_Control;
+    use ESL_WeeklySchedule;
 
     ##### Constants
     private const MODULE_NAME = 'Einschlaflicht';
     private const MODULE_PREFIX = 'ESL';
-    private const MODULE_VERSION = '1.0-2, 07.05.2023';
+    private const MODULE_VERSION = '1.0-3, 19.05.2023';
 
     public function Create()
     {
@@ -33,8 +34,19 @@ class Einschlaflicht extends IPSModule
         ##### Properties
 
         $this->RegisterPropertyInteger('LightStatus', 0);
-        $this->RegisterPropertyInteger('LightColor', 0);
         $this->RegisterPropertyInteger('LightBrightness', 0);
+        $this->RegisterPropertyInteger('LightColor', 0);
+        $this->RegisterPropertyInteger('WeeklySchedule', 0);
+        $this->RegisterPropertyBoolean('UseWeekday', true);
+        $this->RegisterPropertyString('WeekdayStartTime', '{"hour": "22", "minute": "30", "second": "0"}');
+        $this->RegisterPropertyInteger('WeekdayDuration', 60);
+        $this->RegisterPropertyInteger('WeekdayBrightness', 50);
+        $this->RegisterPropertyInteger('WeekdayColor', 16750848);
+        $this->RegisterPropertyBoolean('UseWeekend', true);
+        $this->RegisterPropertyString('WeekendStartTime', '{"hour": "23", "minute": "30", "second": "0"}');
+        $this->RegisterPropertyInteger('WeekendDuration', 30);
+        $this->RegisterPropertyInteger('WeekendBrightness', 50);
+        $this->RegisterPropertyInteger('WeekendColor', 16750848);
 
         ##### Variables
 
@@ -46,21 +58,21 @@ class Einschlaflicht extends IPSModule
             IPS_SetIcon(@$this->GetIDForIdent('SleepLight'), 'Bulb');
         }
 
+        //Brightness
+        $id = @$this->GetIDForIdent('Brightness');
+        $this->RegisterVariableInteger('Brightness', 'Helligkeit', '~Intensity.100', 20);
+        $this->EnableAction('Brightness');
+        if (!$id) {
+            $this->SetValue('Brightness', 50);
+        }
+
         //Color
         $id = @$this->GetIDForIdent('Color');
-        $this->RegisterVariableInteger('Color', 'Farbe', '~HexColor', 20);
+        $this->RegisterVariableInteger('Color', 'Farbe', '~HexColor', 30);
         $this->EnableAction('Color');
         if (!$id) {
             $this->SetValue('Color', 16750848);
             IPS_SetIcon(@$this->GetIDForIdent('Color'), 'Paintbrush');
-        }
-
-        //Brightness
-        $id = @$this->GetIDForIdent('Brightness');
-        $this->RegisterVariableInteger('Brightness', 'Helligkeit', '~Intensity.100', 30);
-        $this->EnableAction('Brightness');
-        if (!$id) {
-            $this->SetValue('Brightness', 50);
         }
 
         //Duration
@@ -71,9 +83,6 @@ class Einschlaflicht extends IPSModule
         IPS_SetVariableProfileIcon($profile, 'Hourglass');
         IPS_SetVariableProfileValues($profile, 0, 120, 0);
         IPS_SetVariableProfileDigits($profile, 0);
-        IPS_SetVariableProfileAssociation($profile, 3, '3 Min.', '', 0x0000FF);
-        IPS_SetVariableProfileAssociation($profile, 5, '5 Min.', '', 0x0000FF);
-        IPS_SetVariableProfileAssociation($profile, 10, '10 Min.', '', 0x0000FF);
         IPS_SetVariableProfileAssociation($profile, 15, '15 Min.', '', 0x0000FF);
         IPS_SetVariableProfileAssociation($profile, 30, '30 Min.', '', 0x0000FF);
         IPS_SetVariableProfileAssociation($profile, 45, '45 Min.', '', 0x0000FF);
@@ -87,11 +96,11 @@ class Einschlaflicht extends IPSModule
             $this->SetValue('Duration', 30);
         }
 
-        //Next power off
-        $id = @$this->GetIDForIdent('NextPowerOff');
-        $this->RegisterVariableString('NextPowerOff', 'Nächste Ausschaltung', '', 50);
+        //Process finished
+        $id = @$this->GetIDForIdent('ProcessFinished');
+        $this->RegisterVariableString('ProcessFinished', 'Schaltvorgang bis', '', 60);
         if (!$id) {
-            IPS_SetIcon($this->GetIDForIdent('NextPowerOff'), 'Clock');
+            IPS_SetIcon($this->GetIDForIdent('ProcessFinished'), 'Clock');
         }
 
         ##### Attributes
@@ -101,7 +110,7 @@ class Einschlaflicht extends IPSModule
 
         #### Timer
 
-        $this->RegisterTimer('DimLight', 0, self::MODULE_PREFIX . '_DimLight(' . $this->InstanceID . ');');
+        $this->RegisterTimer('DecreaseBrightness', 0, self::MODULE_PREFIX . '_DecreaseBrightness(' . $this->InstanceID . ');');
     }
 
     public function Destroy()
@@ -137,28 +146,36 @@ class Einschlaflicht extends IPSModule
             $this->UnregisterReference($referenceID);
         }
 
-        //Delete all update messages
+        //Delete all messages
         foreach ($this->GetMessageList() as $senderID => $messages) {
             foreach ($messages as $message) {
-                if ($message == VM_UPDATE) {
-                    $this->UnregisterMessage($senderID, VM_UPDATE);
+                if ($message == VM_UPDATE || $message == EM_UPDATE) {
+                    $this->UnregisterMessage($senderID, $message);
                 }
             }
         }
 
-        //Register references and update messages
+        //Register references and messages
         $names = [];
-        $names[] = ['propertyName' => 'LightStatus', 'useUpdate' => true];
-        $names[] = ['propertyName' => 'LightColor', 'useUpdate' => false];
-        $names[] = ['propertyName' => 'LightBrightness', 'useUpdate' => false];
+        $names[] = ['propertyName' => 'LightStatus', 'messageCategory' => VM_UPDATE];
+        $names[] = ['propertyName' => 'LightBrightness', 'messageCategory' => VM_UPDATE];
+        $names[] = ['propertyName' => 'LightColor', 'messageCategory' => 0];
+        $names[] = ['propertyName' => 'WeeklySchedule', 'messageCategory' => EM_UPDATE];
         foreach ($names as $name) {
             $id = $this->ReadPropertyInteger($name['propertyName']);
             if ($id > 1 && @IPS_ObjectExists($id)) { //0 = main category, 1 = none
                 $this->RegisterReference($id);
-                if ($name['useUpdate']) {
-                    $this->RegisterMessage($id, VM_UPDATE);
+                $this->SendDebug('RegisterMessage', 'ID: ' . $id . ', Name: ' . $name['propertyName'] . ', Message: ' . $name['messageCategory'], 0);
+                if ($name['messageCategory'] != 0) {
+                    $this->SendDebug('RegisterMessage', ' wird ausgeführt', 0);
+                    $this->SendDebug('RegisterMessage', 'ID: ' . $id . ', Message: ' . $name['messageCategory'], 0);
+                    $this->RegisterMessage($id, $name['messageCategory']);
                 }
             }
+        }
+
+        if (!$this->GetValue('SleepLight')) {
+            @IPS_SetHidden($this->GetIDForIdent('ProcessFinished'), true);
         }
     }
 
@@ -185,6 +202,27 @@ class Einschlaflicht extends IPSModule
                         $this->ToggleSleepLight(false);
                     }
                 }
+
+                //Light brightness
+                $lightBrightness = $this->ReadPropertyInteger('LightBrightness');
+                if ($SenderID == $lightBrightness) {
+                    if ($this->GetValue('SleepLight')) {
+                        if (GetValue($lightBrightness) > $this->ReadAttributeInteger('CyclingBrightness') + 1) {
+                            $this->ToggleSleepLight(false);
+                        }
+                    }
+                }
+                break;
+
+            case EM_UPDATE:
+
+                //$Data[0] = last run
+                //$Data[1] = next run
+
+                //Weekly schedule
+                if ($this->DetermineAction() == 1) {
+                    $this->ToggleSleepLight(true, 1);
+                }
                 break;
 
         }
@@ -193,11 +231,203 @@ class Einschlaflicht extends IPSModule
     public function GetConfigurationForm()
     {
         $data = json_decode(file_get_contents(__DIR__ . '/form.json'), true);
+
+        ##### Elements
         //Module name
         $data['elements'][0]['caption'] = self::MODULE_NAME;
+
         //Version
         $data['elements'][1]['caption'] = 'Version: ' . self::MODULE_VERSION;
+
+        //Weekly schedule
+        $id = $this->ReadPropertyInteger('WeeklySchedule');
+        $enableButton = false;
+        if ($id > 1 && @IPS_ObjectExists($id)) { //0 = main category, 1 = none
+            $enableButton = true;
+        }
+
+        $data['elements'][4]['items'][0] = [
+            'type'  => 'RowLayout',
+            'items' => [
+                [
+                    'type'     => 'SelectEvent',
+                    'name'     => 'WeeklySchedule',
+                    'caption'  => 'Wochenplan',
+                    'width'    => '600px',
+                    'onChange' => self::MODULE_PREFIX . '_ModifyButton($id, "WeeklyScheduleConfigurationButton", "ID " . $WeeklySchedule . " bearbeiten", $WeeklySchedule);'
+                ],
+                [
+                    'type'    => 'Label',
+                    'caption' => ' '
+                ],
+                [
+                    'type'     => 'OpenObjectButton',
+                    'caption'  => 'ID ' . $id . ' bearbeiten',
+                    'name'     => 'WeeklyScheduleConfigurationButton',
+                    'visible'  => $enableButton,
+                    'objectID' => $id
+                ]
+            ]
+        ];
+
+        ##### Actions
+
+        //Registered messages
+        $registeredMessages = [];
+        $messages = $this->GetMessageList();
+        foreach ($messages as $id => $messageID) {
+            $name = 'Objekt #' . $id . ' existiert nicht';
+            $rowColor = '#FFC0C0'; //red
+            if (@IPS_ObjectExists($id)) {
+                $name = IPS_GetName($id);
+                $rowColor = '#C0FFC0'; //light green
+            }
+            switch ($messageID) {
+                case [10001]:
+                    $messageDescription = 'IPS_KERNELSTARTED';
+                    break;
+
+                case [10603]:
+                    $messageDescription = 'VM_UPDATE';
+                    break;
+
+                case [10803]:
+                    $messageDescription = 'EM_UPDATE';
+                    break;
+
+                default:
+                    $messageDescription = 'keine Bezeichnung';
+            }
+            $registeredMessages[] = [
+                'ObjectID'           => $id,
+                'Name'               => $name,
+                'MessageID'          => $messageID,
+                'MessageDescription' => $messageDescription,
+                'rowColor'           => $rowColor];
+        }
+
+        $data['actions'][1] = [
+            'type'    => 'ExpansionPanel',
+            'caption' => 'Registrierte Nachrichten',
+            'items'   => [
+                [
+                    'type'     => 'List',
+                    'name'     => 'RegisteredMessages',
+                    'rowCount' => 10,
+                    'sort'     => [
+                        'column'    => 'ObjectID',
+                        'direction' => 'ascending'
+                    ],
+                    'columns' => [
+                        [
+                            'caption' => 'ID',
+                            'name'    => 'ObjectID',
+                            'width'   => '150px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredMessagesConfigurationButton", "ID " . $RegisteredMessages["ObjectID"] . " aufrufen", $RegisteredMessages["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Name',
+                            'name'    => 'Name',
+                            'width'   => '300px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredMessagesConfigurationButton", "ID " . $RegisteredMessages["ObjectID"] . " aufrufen", $RegisteredMessages["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Nachrichten ID',
+                            'name'    => 'MessageID',
+                            'width'   => '150px'
+                        ],
+                        [
+                            'caption' => 'Nachrichten Bezeichnung',
+                            'name'    => 'MessageDescription',
+                            'width'   => '250px'
+                        ]
+                    ],
+                    'values' => $registeredMessages
+                ],
+                [
+                    'type'     => 'OpenObjectButton',
+                    'name'     => 'RegisteredMessagesConfigurationButton',
+                    'caption'  => 'Aufrufen',
+                    'visible'  => false,
+                    'objectID' => 0
+                ]
+            ]
+        ];
+
+        //Registered references
+        $registeredReferences = [];
+        $references = $this->GetReferenceList();
+        foreach ($references as $reference) {
+            $name = 'Objekt #' . $reference . ' existiert nicht';
+            $rowColor = '#FFC0C0'; //red
+            if (@IPS_ObjectExists($reference)) {
+                $name = IPS_GetName($reference);
+                $rowColor = '#C0FFC0'; //light green
+            }
+            $registeredReferences[] = [
+                'ObjectID' => $reference,
+                'Name'     => $name,
+                'rowColor' => $rowColor];
+        }
+
+        $data['actions'][2] = [
+            'type'    => 'ExpansionPanel',
+            'caption' => 'Registrierte Referenzen',
+            'items'   => [
+                [
+                    'type'     => 'List',
+                    'name'     => 'RegisteredReferences',
+                    'rowCount' => 10,
+                    'sort'     => [
+                        'column'    => 'ObjectID',
+                        'direction' => 'ascending'
+                    ],
+                    'columns' => [
+                        [
+                            'caption' => 'ID',
+                            'name'    => 'ObjectID',
+                            'width'   => '150px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                        ],
+                        [
+                            'caption' => 'Name',
+                            'name'    => 'Name',
+                            'width'   => '300px',
+                            'onClick' => self::MODULE_PREFIX . '_ModifyButton($id, "RegisteredReferencesConfigurationButton", "ID " . $RegisteredReferences["ObjectID"] . " aufrufen", $RegisteredReferences["ObjectID"]);'
+                        ]
+                    ],
+                    'values' => $registeredReferences
+                ],
+                [
+                    'type'     => 'OpenObjectButton',
+                    'name'     => 'RegisteredReferencesConfigurationButton',
+                    'caption'  => 'Aufrufen',
+                    'visible'  => false,
+                    'objectID' => 0
+                ]
+            ]
+        ];
+
         return json_encode($data);
+    }
+
+    /**
+     * Modifies a configuration button.
+     *
+     * @param string $Field
+     * @param string $Caption
+     * @param int $ObjectID
+     * @return void
+     */
+    public function ModifyButton(string $Field, string $Caption, int $ObjectID): void
+    {
+        $state = false;
+        if ($ObjectID > 1 && @IPS_ObjectExists($ObjectID)) { //0 = main category, 1 = none
+            $state = true;
+        }
+        $this->UpdateFormField($Field, 'caption', $Caption);
+        $this->UpdateFormField($Field, 'visible', $state);
+        $this->UpdateFormField($Field, 'objectID', $ObjectID);
     }
 
     #################### Request action

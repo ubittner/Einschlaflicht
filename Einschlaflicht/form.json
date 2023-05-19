@@ -13,24 +13,140 @@
             "caption": " "
         },
         {
-            "type": "SelectVariable",
-            "name": "LightStatus",
-            "caption": "Lichtstatus"
+            "type": "ExpansionPanel",
+            "caption": "Lampe",
+            "items": [
+                {
+                    "type": "SelectVariable",
+                    "name": "LightStatus",
+                    "caption": "Aus / An",
+                    "width": "600px"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "LightBrightness",
+                    "caption": "Helligkeit",
+                    "width": "600px"
+                },
+                {
+                    "type": "SelectVariable",
+                    "name": "LightColor",
+                    "caption": "Farbe",
+                    "width": "600px"
+                }
+            ]
         },
         {
-            "type": "SelectVariable",
-            "name": "LightColor",
-            "caption": "Lichtfarbe"
-        },
-        {
-            "type": "SelectVariable",
-            "name": "LightBrightness",
-            "caption": "Lichthelligkeit"
+            "type": "ExpansionPanel",
+            "caption": "Wochenplan",
+            "items": [
+                {
+                    "type": "RowLayout",
+                    "items": [
+                        {
+                            "type": "Label",
+                            "caption": "Wochenplan"
+                        }
+                    ]
+                },
+                {
+                    "type": "Label",
+                    "caption": " "
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "UseWeekday",
+                    "caption": "Montag bis Freitag"
+                },
+                {
+                    "type": "SelectTime",
+                    "name": "WeekdayStartTime",
+                    "caption": "Startzeit"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WeekdayDuration",
+                    "caption": "Dauer",
+                    "suffix": "Minuten",
+                    "minimum": 15,
+                    "maximum": 120
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WeekdayBrightness",
+                    "caption": "Helligkeit",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                {
+                    "type": "SelectColor",
+                    "name": "WeekdayColor",
+                    "caption": "Farbe"
+                },
+                {
+                    "type": "Label",
+                    "caption": " "
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "UseWeekend",
+                    "caption": "Samstag und Sonntag"
+                },
+                {
+                    "type": "SelectTime",
+                    "name": "WeekendStartTime",
+                    "caption": "Startzeit"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WeekendDuration",
+                    "caption": "Dauer",
+                    "suffix": "Minuten",
+                    "minimum": 15,
+                    "maximum": 120
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "WeekendBrightness",
+                    "caption": "Helligkeit",
+                    "minimum": 0,
+                    "maximum": 100
+                },
+                {
+                    "type": "SelectColor",
+                    "name": "WeekendColor",
+                    "caption": "Farbe"
+                },
+                {
+                    "type": "Label",
+                    "caption": " "
+                },
+                {
+                    "type": "PopupButton",
+                    "caption": "Wochenplan erstellen",
+                    "popup": {
+                        "caption": "Wochenplan wirklich erstellen?",
+                        "items": [
+                            {
+                                "type": "Button",
+                                "caption": "Erstellen",
+                                "onClick": "$id = ESL_CreateWeeklySchedule($id, $WeekdayStartTime, $WeekendStartTime);"
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     ],
     "actions": [
         {
-            "type": "TestCenter"
+            "type": "ExpansionPanel",
+            "caption": "Schaltfunktionen",
+            "items": [
+                {
+                    "type": "TestCenter"
+                }
+            ]
         }
     ],
     "status": [
