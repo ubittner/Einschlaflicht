@@ -39,7 +39,7 @@ var_dump($result);
 
 ## Ausnahmen
 
-| Vorgang                        | Gerätestatus                                | Aktion  |
+| Vorgang                        | Lampenstatus                                | Aktion  |
 |--------------------------------|---------------------------------------------|---------|
 | Beim Verringern der Helligkeit | Lampe wurde inzwischen wieder ausgeschaltet | Abbruch |
 | Beim Verringern der Helligkeit | Helligkeit wurde bereits manuell verändert  | Abbruch |
