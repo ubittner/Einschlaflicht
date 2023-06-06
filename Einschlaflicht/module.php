@@ -42,8 +42,12 @@ class Einschlaflicht extends IPSModule
         ##### Variables
 
         //Sleep light
+        $id = @$this->GetIDForIdent('SleepLight');
         $this->RegisterVariableBoolean('SleepLight', 'Einschlaflicht', '~Switch', 10);
         $this->EnableAction('SleepLight');
+        if (!$id) {
+            IPS_SetIcon(@$this->GetIDForIdent('SleepLight'), 'Moon');
+        }
 
         //Brightness
         $id = @$this->GetIDForIdent('Brightness');
@@ -63,11 +67,11 @@ class Einschlaflicht extends IPSModule
         IPS_SetVariableProfileDigits($profile, 0);
         IPS_SetVariableProfileAssociation($profile, 0, 'Zuletzt verwendet', '', 0xFF0000);
         IPS_SetVariableProfileAssociation($profile, 1, 'Benutzerdefiniert', '', 0x0000FF);
-        IPS_SetVariableProfileAssociation($profile, 52224, 'Farbe 1', '', 52224);
-        IPS_SetVariableProfileAssociation($profile, 874662, 'Farbe 2', '', 874662);
-        IPS_SetVariableProfileAssociation($profile, 4657582, 'Farbe 3', '', 4657582);
-        IPS_SetVariableProfileAssociation($profile, 12984992, 'Farbe 4', '', 12984992);
-        IPS_SetVariableProfileAssociation($profile, 16750848, 'Farbe 5', '', 16750848);
+        IPS_SetVariableProfileAssociation($profile, 52224, 'Grün', '', 52224);
+        IPS_SetVariableProfileAssociation($profile, 874662, 'Blau', '', 874662);
+        IPS_SetVariableProfileAssociation($profile, 4657582, 'Violett', '', 4657582);
+        IPS_SetVariableProfileAssociation($profile, 12984992, 'Magenta', '', 12984992);
+        IPS_SetVariableProfileAssociation($profile, 16750848, 'Orange', '', 16750848);
         $id = @$this->GetIDForIdent('ColorSelection');
         $this->RegisterVariableInteger('ColorSelection', 'Farbauswahl', $profile, 30);
         $this->EnableAction('ColorSelection');
@@ -179,6 +183,13 @@ class Einschlaflicht extends IPSModule
                 }
             }
         }
+
+        //Disable color
+        $disabled = true;
+        if ($this->GetValue('ColorSelection') == 1) {
+            $disabled = false;
+        }
+        IPS_SetDisabled($this->GetIDForIdent('Color'), $disabled);
 
         //Hide process finished
         if (!$this->GetValue('SleepLight')) {
@@ -514,8 +525,16 @@ class Einschlaflicht extends IPSModule
                 $this->ToggleSleepLight($Value);
                 break;
 
-            case 'Brightness':
             case 'ColorSelection':
+                $this->SetValue($Ident, $Value);
+                $disabled = true;
+                if ($Value == 1) {
+                    $disabled = false;
+                }
+                IPS_SetDisabled($this->GetIDForIdent('Color'), $disabled);
+                break;
+
+            case 'Brightness':
             case 'Color':
             case 'Duration':
                 $this->SetValue($Ident, $Value);
