@@ -39,7 +39,11 @@ trait Control
             $this->SetValue('SleepLight', false);
             IPS_SetDisabled($this->GetIDForIdent('Brightness'), false);
             IPS_SetDisabled($this->GetIDForIdent('ColorSelection'), false);
-            IPS_SetDisabled($this->GetIDForIdent('Color'), false);
+            $disabled = true;
+            if ($this->GetValue('ColorSelection') == 1) {
+                $disabled = false;
+            }
+            IPS_SetDisabled($this->GetIDForIdent('Color'), $disabled);
             IPS_SetDisabled($this->GetIDForIdent('Duration'), false);
             $this->SetValue('ProcessFinished', '');
             @IPS_SetHidden($this->GetIDForIdent('ProcessFinished'), true);
@@ -120,37 +124,79 @@ trait Control
         if (!$this->CheckDeviceBrightnessID()) {
             return;
         }
+        //Cycling brightness
         $cyclingBrightness = $this->ReadAttributeInteger('CyclingBrightness');
-        //Last cycle
-        if ($cyclingBrightness == 1) {
+        $cyclingBrightness--;
+        $this->SendDebug(__FUNCTION__, 'Helligkeit: ' . $cyclingBrightness, 0);
+        $this->WriteAttributeInteger('CyclingBrightness', $cyclingBrightness);
+        //Set device brightness
+        $this->SetDeviceBrightness($cyclingBrightness);
+        //Check for last cycle
+        if ($cyclingBrightness == 0) {
             $this->ToggleSleepLight(false);
             //Power off device
             $this->SendDebug(__FUNCTION__, 'Lampe ausschalten', 0);
-            $powerOffDevice = @RequestAction($this->ReadPropertyInteger('DevicePower'), false);
-            //Try again
-            if (!$powerOffDevice) {
-                @RequestAction($this->ReadPropertyInteger('DevicePower'), false);
-            }
+            $this->PowerDevice(false);
             return;
         }
-        //Cycle
-        $actualDeviceBrightness = GetValue($this->ReadPropertyInteger('DeviceBrightness'));
-        if ($actualDeviceBrightness > 1) {
-            //Decrease Brightness
-            $decreasedBrightness = $cyclingBrightness - 1;
-            $this->WriteAttributeInteger('CyclingBrightness', $decreasedBrightness);
-            $this->SendDebug(__FUNCTION__, 'Helligkeit: ' . $decreasedBrightness, 0);
-            $setDeviceBrightness = @RequestAction($this->ReadPropertyInteger('DeviceBrightness'), $decreasedBrightness);
-            //Try again
-            if (!$setDeviceBrightness) {
-                @RequestAction($this->ReadPropertyInteger('DeviceBrightness'), $decreasedBrightness);
-            }
-            //Set next cycle
-            $this->SetTimerInterval('DecreaseBrightness', $this->CalculateNextCycle() * 1000);
+        //Set next cycle
+        $this->SetTimerInterval('DecreaseBrightness', $this->CalculateNextCycle() * 1000);
+    }
+
+    /**
+     * Powers the device off or on.
+     *
+     * @param bool $State
+     * false =  off,
+     * true =   on
+     *
+     * @return bool
+     * false =  an error occurred,
+     * true =   successful
+     *
+     * @throws Exception
+     */
+    public function PowerDevice(bool $State): bool
+    {
+        $debugText = 'Lampe ausschalten';
+        if ($State) {
+            $debugText = 'Lame einschalten';
         }
+        $this->SendDebug(__FUNCTION__, $debugText, 0);
+        if (!$this->CheckDevicePowerID()) {
+            return false;
+        }
+        $powerDevice = @RequestAction($this->ReadPropertyInteger('DevicePower'), $State);
+        //Try again
+        if (!$powerDevice) {
+            $powerDevice = @RequestAction($this->ReadPropertyInteger('DevicePower'), $State);
+        }
+        return $powerDevice;
     }
 
     #################### Private
+
+    /**
+     * Sets the brightness of the device.
+     *
+     * @param int $Brightness
+     * Brightness
+     *
+     * @return bool
+     * false =  an error occurred,
+     * true =   successful
+     *
+     * @throws Exception
+     */
+    private function SetDeviceBrightness(int $Brightness): bool
+    {
+        $setDeviceBrightness = @RequestAction($this->ReadPropertyInteger('DeviceBrightness'), $Brightness);
+        //Try again
+        if (!$setDeviceBrightness) {
+            $setDeviceBrightness = @RequestAction($this->ReadPropertyInteger('DeviceBrightness'), $Brightness);
+        }
+        return $setDeviceBrightness;
+    }
 
     /**
      * Calculates the next cycle.
