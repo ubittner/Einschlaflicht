@@ -66,6 +66,22 @@
                     "onChange": "ESL_ModifyButton($id, 'WeeklyScheduleConfigurationButton', 'ID ' . $WeeklySchedule . ' bearbeiten', $WeeklySchedule);"
                 }
             ]
+        },
+        {
+            "type": "Label",
+            "caption": "Placeholder Button"
+        },
+        {
+            "type": "Label",
+            "caption": " "
+        },
+        {   "type": "CheckBox",
+            "name": "CheckDevicePower",
+            "caption": "Gerätestatus (Ein/Aus) prüfen"
+        },
+        {   "type": "CheckBox",
+            "name": "CheckDeviceBrightness",
+            "caption": "Helligkeit prüfen"
         }
     ],
     "actions": [

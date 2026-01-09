@@ -39,6 +39,10 @@ class Einschlaflicht extends IPSModule
         //Weekly schedule
         $this->RegisterPropertyInteger('WeeklySchedule', 0);
 
+        //Checks
+        $this->RegisterPropertyBoolean('CheckDevicePower', true);
+        $this->RegisterPropertyBoolean('CheckDeviceBrightness', true);
+
         ##### Variables
 
         //Sleep light
@@ -221,10 +225,12 @@ class Einschlaflicht extends IPSModule
                 //Device power
                 $devicePowerID = $this->ReadPropertyInteger('DevicePower');
                 if ($SenderID == $devicePowerID) {
-                    //Device is powered off
-                    if ($this->GetValue('SleepLight') && !GetValue($devicePowerID)) {
-                        $this->SendDebug(__FUNCTION__, 'Abbruch, Lampe wurde ausgeschaltet!', 0);
-                        $this->ToggleSleepLight(false);
+                    if ($this->ReadPropertyBoolean('CheckDevicePower')) {
+                        //Device is powered off
+                        if ($this->GetValue('SleepLight') && !GetValue($devicePowerID)) {
+                            $this->SendDebug(__FUNCTION__, 'Abbruch, Lampe wurde ausgeschaltet!', 0);
+                            $this->ToggleSleepLight(false);
+                        }
                     }
                 }
 
@@ -235,9 +241,11 @@ class Einschlaflicht extends IPSModule
                         $this->SendDebug(__FUNCTION__, 'Lampe-Helligkeit: ' . $Data[0], 0);
                         $deviceBrightness = GetValue($deviceBrightnessID);
                         $cyclingBrightness = $this->ReadAttributeInteger('CyclingBrightness');
-                        if ($deviceBrightness != $cyclingBrightness) {
-                            $this->SendDebug(__FUNCTION__, 'Abbruch, Lampe-Helligkeit wurde manuell geändert!', 0);
-                            $this->ToggleSleepLight(false);
+                        if ($this->ReadPropertyBoolean('CheckDeviceBrightness')) {
+                            if ($deviceBrightness != $cyclingBrightness) {
+                                $this->SendDebug(__FUNCTION__, 'Abbruch, Lampe-Helligkeit wurde manuell geändert!', 0);
+                                $this->ToggleSleepLight(false);
+                            }
                         }
                     }
                 }
