@@ -39,7 +39,7 @@ var_dump($result);
 
 ## Ausnahmen
 
-| Vorgang                        | Lampenstatus                                | Aktion  |
-|--------------------------------|---------------------------------------------|---------|
-| Beim Verringern der Helligkeit | Lampe wurde inzwischen wieder ausgeschaltet | Abbruch |
-| Beim Verringern der Helligkeit | Helligkeit wurde bereits manuell verändert  | Abbruch |
+| Einstellung in der Instanzkonfiguration | Lampenstatus                                 | Aktion                |
+|-----------------------------------------|----------------------------------------------|-----------------------|
+| Gerätestatus (Ein/Aus) prüfen = AN      | Lampe wurde inzwischen manuell ausgeschaltet | Abbruch der Automatik |
+| Helligkeit prüfen = AN                  | Helligkeit wurde bereits manuell verändert   | Abbruch der Automatik |
